@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assessment</title>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.5.16/d3.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            font-family: sans-serif;
+            font-size: 20px;
+            font-weight: 200;
+            box-sizing: border-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+        }
+
+        #controls {
+            width: 100%;
+            position: fixed;
+            background-color: #fff;
+            top: 0px;
+            height: 20vh;
+            text-align: center;
+        }
+
+        #vis {
+            margin-top: 20vh;
+        }
+
+        .dashboard {
+            height: 80vh;
+            padding-left: 40px;
+            padding-right: 40px;
+        }
+
+        .row {
+            height: 35vh;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            align-content: stretch;
+            align-items: flex-start;
+        }            
+        
+        .vis-container {
+            height: 100%;
+            order: 0;
+            flex-grow: 1;
+            flex-basis: 50%;
+            align-self: stretch;
+        }
+
+        .vis-container p {
+            padding-left: 20px;
+        }
+
+        .vis-container .vis {
+            height: 80%;
+        }
+
+        #challenging {
+            flex-grow: 0;
+            width: 50%;
+        }
+
+        input[type=button] {
+            height: 60px;
+            width: 24%;
+            font-weight: 300;
+            font-size: 20px;
+            border-radius: 8px;
+            outline: none;
+            border: none;
+            background-color: #fff;
+        }
+
+        input[type=button]#jomec {
+            background-color: #8dd3c7;
+            opacity: 0.5;
+        }
+
+        input[type=button]#comsc {
+            background-color: #ffffb3;
+            opacity: 0.5;
+        }
+
+        input[type=button]#welsh {
+            background-color: #bebada;
+            opacity: 0.5;
+        }
+
+        input[type=button]#cplan {
+            background-color: #fb8072;
+            opacity: 0.5;
+        }
+
+        input[type=button].active {
+            opacity: 1.0;
+            border: 4px solid #000;
+            font-weight: 600;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .x.axis path {
+            display: none;
+        }
+
+        @media only screen and (max-width: 800px) {
+            .dashboard {
+                height: 100%;
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-bottom: 30px;
+            }
+
+            .row {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                align-content: stretch;
+                align-items: flex-start;
+            }            
+            
+            .vis-container {
+                height: 35vh;
+                order: 0;
+                flex-grow: 1;
+                flex-basis: 50%;
+                align-self: stretch;
+            }
+
+            .vis-container p {
+                padding-left: 10px;
+            }
+
+            .vis-container .vis {
+                height: 80%;
+            }
+
+            #challenging {
+                flex-grow: 1;
+                width: 100%;
+            }
+
+        }
+    </style>
+</head>
+<body>
+    <header id="controls">
+        <h1>Select schools to view</h1>
+        <form>
+            <input type="button" id="comsc" value="COMSC" class="active">
+            <input type="button" id="jomec" value="JOMEC" class="active">
+            <input type="button" id="welsh" value="WELSH" class="active">
+            <input type="button" id="cplan" value="CPLAN" class="active">
+        </form>    
+    </header>
+    <div id="vis">
+        <section class="dashboard">
+            <h2>When compared to written essays and examinations, the <em>assessment</em> allowed me to:</h2>
+            <div class="row">
+                <div id="skillset" class="vis-container">
+                    <p>demonstrate a different skillset</p>
+                    <div class="vis"></div>
+                </div>
+                <div id="engagement" class="vis-container">
+                    <p>engage in more depth with the module</p>
+                    <div class="vis"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div id="transferable" class="vis-container">
+                    <p>learn new transferable skills</p>
+                    <div class="vis"></div>
+                </div>
+                <div id="employment" class="vis-container">
+                    <p>develop skills for future employment</p>
+                    <div class="vis"></div>
+                </div>
+            </div>   
+        </section>
+        <section class="dashboard">
+            <h2>When compared to written essays and examinations, the <em>assessment</em>:</h2>
+            <div class="row">
+                <div id="enjoyable" class="vis-container">
+                    <p>was a more enjoyable assessment</p>
+                    <div class="vis"></div>
+                </div>
+                <div id="time" class="vis-container">
+                    <p>took more time to complete</p>
+                    <div class="vis"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div id="challenging" class="vis-container">
+                    <p>was more challenging</p>
+                    <div class="vis"></div>
+                </div>
+            </div>
+        </section>
+        <section class="dashboard">
+            <h2>Overall:</h2>
+            <div class="row">
+                <div id="guidance" class="vis-container">
+                    <p>Do you think that you received enough guidance to complete the assessment?</p>
+                    <div class="vis"></div>
+                </div>
+                <div id="academic" class="vis-container">
+                    <p>Do you think that this form of assessment is academically rigorous?</p>
+                    <div class="vis"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script>
+
+        var schools = ['comsc', 'jomec', 'welsh', 'cplan'];
+        var active = ['comsc', 'jomec', 'welsh', 'cplan'];
+        active = active.sort();
+        
+        var colours = {'comsc': '#ffffb3', 'jomec': '#8dd3c7', 'welsh': '#bebada', 'cplan': '#fb8072'};
+
+        var datasets = ['skillset', 'engagement', 'transferable', 'employment', 'enjoyable', 'time', 'challenging', 'guidance', 'academic'];
+
+        var display_data;
+
+        queue()
+            .defer(d3.csv, 'skillset.csv')
+            .defer(d3.csv, 'engagement.csv')
+            .defer(d3.csv, 'transferable.csv')
+            .defer(d3.csv, 'employment.csv')
+            .defer(d3.csv, 'enjoyable.csv')
+            .defer(d3.csv, 'time.csv')
+            .defer(d3.csv, 'challenging.csv')
+            .defer(d3.csv, 'guidance.csv')
+            .defer(d3.csv, 'academic.csv')
+            .await(function(error, skillset, engagement, transferable, employment, enjoyable, time, challenging, guidance, academic){
+
+                var all_data = [
+                    {name: 'skillset', data: skillset},
+                    {name: 'engagement', data: engagement},
+                    {name: 'transferable', data: transferable},
+                    {name: 'employment', data: employment},
+                    {name: 'enjoyable', data: enjoyable},
+                    {name: 'time', data: time},
+                    {name: 'challenging', data: challenging},
+                    {name: 'guidance', data: guidance},
+                    {name: 'academic', data: academic},
+                ];
+
+                init();
+                draw();
+
+                console.log(all_data);
+                filter_and_transform_data();
+
+                var buttons = d3.selectAll('input');
+                buttons.on('click', function(){
+                    var button = d3.select(this);
+
+                    if(button.classed('active')) {
+                        if(active.length > 1) {
+                            button.classed('active', false);
+                            active.splice(active.indexOf(button.attr('id')), 1);
+                        } 
+                    } else {
+                        button.classed('active', true);    
+                        active.push(button.attr('id'));
+                    }
+                    active = active.sort();
+                    console.log(active);
+                    filter_and_transform_data();
+                    draw();
+                });
+
+                function filter_and_transform_data() {
+                    display_data = [];
+                    for(var i in all_data) {
+                        display_data.push({
+                            name: all_data[i].name, 
+                            data: active.map(function(s){
+                                if(d3.select('#' + s).classed('active')) {
+                                    return all_data[i].data.map(function(d){
+                                        return {x: d.answer, y: +d[s], colour: colours[s], school: s};
+                                    });                        
+                                }
+                            })
+                        });
+                    }
+                    console.log(display_data);
+                    var layers = d3.layout.stack()(display_data[0]['data']);
+                    console.log(layers);
+                }
+
+                function init(){
+                    all_data.forEach(function(dataset){
+                        var width = +d3.select('#' + dataset.name + ' .vis').node().getBoundingClientRect().width;
+                        var height = +d3.select('#' + dataset.name + ' .vis').node().getBoundingClientRect().height; 
+                        var svg = d3.select('#' + dataset.name + ' .vis')
+                            .append('svg')
+                            .attr('width', width)
+                            .attr('height', height);                       
+                    });
+                }
+
+                function draw(){
+
+                    all_data.forEach(function(dataset){
+
+                        var svg = d3.select('#' + dataset.name + ' .vis svg');
+                        var width = svg.attr('width');
+                        var height = svg.attr('height');
+
+                        var padding = {
+                            top: 10,
+                            bottom: 60,
+                            left: 40,
+                            right: 30
+                        }; 
+
+                        var x_scale = d3.scale.ordinal()
+                            .rangeRoundBands([padding.left, width-padding.right], 0.3);
+
+                        var y_scale = d3.scale.linear()
+                            .rangeRound([height-padding.bottom, padding.top]);    
+
+                        var x_axis = d3.svg.axis()
+                            .scale(x_scale)
+                            .orient("bottom");
+
+                        var y_axis = d3.svg.axis()
+                            .scale(y_scale)
+                            .orient("left")
+                            .ticks(5);  
+
+                        svg.append("g")
+                            .attr("class", "axis x")
+                            .attr("transform", "translate(0," + (height - padding.bottom) + ")");              
+                        svg.append("g")
+                            .attr("class", "axis y")
+                            .attr("transform", "translate(" + padding.left + ",0)");
+
+                        var layers_data = active.map(function(s){
+                            return dataset.data.map(function(d){
+                                return {x: d.answer, y: +d[s], colour: colours[s], school: s};
+                            });                        
+                        });
+
+                        var layers = d3.layout.stack()(layers_data);
+                        console.log(layers);
+
+                        x_scale.domain(layers[0].map(function(d) { return d.x; }));
+                        y_scale.domain([0, d3.max(layers[layers.length - 1], function(d) { return +d.y0 + d.y; })]).nice(); 
+
+                        var school = svg.selectAll('.school')
+                            .data(layers, function(d){ return d[0].school; });
+
+                        school
+                            .enter()
+                            .append('g')
+                            .attr('class', 'school')
+                            .attr('id', function(d){
+                                return d[0].school;
+                            })
+                            .style('opacity', 0);
+
+                        school
+                            .transition()
+                            .duration(500)
+                            .style('opacity', 1);
+
+                        var rects = school.selectAll('rect')
+                            .data(function(d){ return d; });
+
+                        rects
+                            .enter()
+                            .append('rect')
+                            .attr('fill', function(d){ return d.colour; })
+                            .attr('x', function(d){ return x_scale(d.x); })
+                            .attr('width', x_scale.rangeBand())
+                            .attr('height', 0)
+                            .attr('y', function(d) { return y_scale(d.y0); } )
+                            .attr('stroke', '#000')
+                            .attr('stroke-width', '0.5px');
+                            
+                        rects
+                            .transition()
+                            .duration(1000)
+                            .attr('class', function(d){ return d.school; })
+                            .attr("y", function(d) { return y_scale(d.y + d.y0); })
+                            .attr("height", function(d) { return y_scale(d.y0) - y_scale(d.y + d.y0); })
+                            .attr('fill', function(d){ return d.colour; });
+
+                        rects
+                            .exit()
+                            .transition()
+                            .duration(500)
+                            .attr('height', 0)
+                            .attr('y', height-padding.bottom )
+                            .style('opacity', 0);
+
+                        school
+                            .exit()
+                            .transition()
+                            .duration(500)
+                            .style('opacity', 0)
+                            .remove();
+                             
+                        svg.select('.x.axis')
+                            .transition()
+                            .call(x_axis)
+                            .selectAll('.x.axis text')
+                            .call(function(t){
+                                t.each(function(d){
+                                    var self = d3.select(this);
+                                    var s = self.text().split('_');
+                                    self.text('')
+                                    for(var i = 0; i < s.length; i++) {
+                                        self.append('tspan')
+                                            .attr('x', 0)
+                                            .attr('dy', '.8em')
+                                            .text(s[i]);
+                                    }
+                                })
+                            });
+
+                        svg.select('.y.axis')
+                            .transition()
+                            .duration(1000)
+                            .call(y_axis);
+
+                    });
+
+
+                }
+ 
+            });
+
+
+    </script>
+</body>
